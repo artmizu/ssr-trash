@@ -1,31 +1,37 @@
+const express = require('express');
+const path = require('path');
+const server = express();
+const bundle = require('./dist/vue-ssr-server-bundle.json');
+const clientManifest = require('./dist/vue-ssr-client-manifest.json');
 const { createBundleRenderer } = require('vue-server-renderer')
-const server = require('express')()
-const renderer = require('vue-server-renderer').createRenderer({
-  template: require('fs').readFileSync('./index.template.html', 'utf-8'), // (optional) page template
-});
-const bundle =  require('./dist/server.bundle.js');
 
-// inside a server handler...
+let renderer = createBundleRenderer(bundle, {
+  template: require('fs').readFileSync('./src/index.template.html', 'utf-8'), // (optional) page template
+  clientManifest: clientManifest,
+  // runInNewContext: false
+});
+
+server.use('/dist', express.static(path.resolve(__dirname, './dist')));
+
 server.get('*', (req, res) => {
-  bundle.default({ url: req.url }).then((app) => {
-    let context = {
-      title: 'Test-title',
-    };
-    renderer.renderToString(app, context, (err, html) => {
-      // handle error...
-      if (err) {
-        if (err.code === 404) {
-          res.status(404).end('Page not found')
-        } else {
-          res.status(500).end('Internal Server Error')
-        }
+  res.setHeader("Content-Type", "text/html");
+
+	const context = {
+		url: req.url,
+		title: "Headline News"
+  };
+  
+  renderer.renderToString(context, (err, html) => {
+    if (err) {
+      if (err.code === 404) {
+        res.status(404).end('Page not found')
       } else {
-        res.end(html)
+        res.status(500).end('Internal Server Error')
       }
-    })
-  }).catch(err => console.log('jopu sosi', err));
-  // No need to pass an app here because it is auto-created by
-  // executing the bundle. Now our server is decoupled from our Vue app!
+    } else {
+      res.end(html)
+    }
+  })
 })
 
 server.listen(8080)

@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server": "nodemon --inspect=0.0.0.0:3001 server.js",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "webpack --config=config/webpack.server.config.js -w",
+    "build:client": "webpack --config=./config/webpack.client.config.js -w"
   },
   "keywords": [],
   "author": "",
